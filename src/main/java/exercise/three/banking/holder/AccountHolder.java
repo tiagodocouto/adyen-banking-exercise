@@ -1,12 +1,12 @@
-package exercise.three.banking;
+package exercise.three.banking.holder;
 
 public abstract class AccountHolder {
-    private int idNumber;
+    private final int idNumber;
 
     /**
      * @param idNumber The government-issued ID used during account setup.
      */
-    public AccountHolder(int idNumber) {
+    protected AccountHolder(int idNumber) {
         this.idNumber = idNumber;
     }
 

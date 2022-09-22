@@ -1,7 +1,7 @@
-package exercise.three.banking;
+package exercise.three.banking.holder;
 
 public class Company extends AccountHolder {
-    private String companyName;
+    private final String companyName;
 
     public Company(String companyName, int taxId) {
         super(taxId);

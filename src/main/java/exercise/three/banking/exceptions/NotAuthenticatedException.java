@@ -1,4 +1,4 @@
-package exercise.three.banking;
+package exercise.three.banking.exceptions;
 
 public class NotAuthenticatedException extends Exception {
     public NotAuthenticatedException() {

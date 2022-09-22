@@ -1,54 +1,59 @@
 package exercise.three.banking;
 
-import exercise.three.banking.Bank;
-import exercise.three.banking.Company;
-import exercise.three.banking.Person;
-import exercise.three.banking.Transaction;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+import exercise.three.banking.bank.Bank;
+import exercise.three.banking.holder.Company;
+import exercise.three.banking.holder.Person;
+import exercise.three.banking.transaction.Transaction;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 
 public class SampleTest {
     /**
      * The bank/
      */
     Bank bank;
+
     /**
      * The account number for Amelia Pond
      */
     Long ameliaPond;
+
     /**
      * The account number for Rose Tyler
      */
     Long roseTyler;
+
     /**
      * The account number for Acme Corp
      */
     Long acmeCorp;
+
     /**
      * The account number for HackerRank
      */
     Long hackerRank;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         bank = new Bank();
         Person person1ameliaPond = new Person("Amelia", "Pond", 1);
         Person person2roseTyler = new Person("Rose", "Tyler", 2);
         Company company1acmeCorp = new Company("Acme Corp", 1);
         Company company2hackerRank = new Company("HackerRank", 2);
-        ameliaPond = bank.openConsumerAccount(person1ameliaPond, 1111, 0.0);
-        roseTyler = bank.openConsumerAccount(person2roseTyler, 2222, 456.78);
-        acmeCorp = bank.openCommercialAccount(company1acmeCorp, 1111, 0.0);
-        hackerRank = bank.openCommercialAccount(company2hackerRank, 2222, 9876543.21);
+        ameliaPond = bank.openAccount(person1ameliaPond, "1111", 0.0);
+        roseTyler = bank.openAccount(person2roseTyler, "2222", 456.78);
+        acmeCorp = bank.openAccount(company1acmeCorp, "1111", 0.0);
+        hackerRank = bank.openAccount(company2hackerRank, "2222", 9876543.21);
     }
 
     @After
-    public void tearDown() throws Exception {
+    public void tearDown() {
         bank = null;
         ameliaPond = null;
         roseTyler = null;
@@ -58,17 +63,14 @@ public class SampleTest {
 
     @Test
     public void invalidAccountNumberTest() {
-        Assert.assertTrue("1st and 2nd accounts were not assigned sequential account numbers.",
-                          ameliaPond + 1 == roseTyler);
-        Assert.assertTrue("2nd and 3rd accounts were not assigned sequential account numbers.",
-                          roseTyler + 1 == acmeCorp);
-        Assert.assertTrue("3rd and 4th accounts were not assigned sequential account numbers.",
-                          acmeCorp + 1 == hackerRank);
+        assertEquals("1st and 2nd accounts were not assigned sequential account numbers.", ameliaPond + 1, (long) roseTyler);
+        assertEquals("2nd and 3rd accounts were not assigned sequential account numbers.", roseTyler + 1, (long) acmeCorp);
+        assertEquals("3rd and 4th accounts were not assigned sequential account numbers.", acmeCorp + 1, (long) hackerRank);
 
-        assertEquals(bank.getBalance(ameliaPond), 0.0, 0);
-        assertEquals(bank.getBalance(roseTyler), 456.78, 0);
-        assertEquals(bank.getBalance(acmeCorp), 0.0, 0);
-        assertEquals(bank.getBalance(hackerRank), 9876543.21, 0);
+        assertEquals(0.0, bank.getBalance(ameliaPond), 0);
+        assertEquals(456.78, bank.getBalance(roseTyler), 0);
+        assertEquals(0.0, bank.getBalance(acmeCorp), 0);
+        assertEquals(9876543.21, bank.getBalance(hackerRank), 0);
         Assert.assertNotEquals(bank.getBalance(ameliaPond), bank.getBalance(roseTyler));
         Assert.assertNotEquals(bank.getBalance(acmeCorp), bank.getBalance(hackerRank));
     }
@@ -113,7 +115,16 @@ public class SampleTest {
      */
     @Test(expected = Exception.class)
     public void invalidPinTransaction() throws Exception {
-        new Transaction(bank, ameliaPond, 1234);
+        new Transaction(bank, ameliaPond, "1234");
+    }
+
+    /**
+     * Tests {@link Transaction}: an attempt to access an account with a null PIN must throw an
+     * Exception.
+     */
+    @Test(expected = RuntimeException.class)
+    public void nullPinTransaction() {
+        bank.authenticateUser(null, ameliaPond, null);
     }
 
     /**
@@ -123,7 +134,7 @@ public class SampleTest {
      */
     @Test
     public void transactionTest() throws Exception {
-        Transaction transaction1 = new Transaction(bank, ameliaPond, 1111);
+        Transaction transaction1 = new Transaction(bank, ameliaPond, "1111");
         double beforeDeposit1 = transaction1.getBalance();
         double amount = 23452.43;
         transaction1.credit(amount);
@@ -132,5 +143,25 @@ public class SampleTest {
         assertFalse("This transaction should have overdrawn the account.", transaction1.debit(amount));
         assertEquals(beforeDeposit1, transaction1.getBalance(), 0);
         assertEquals(transaction1.getBalance(), bank.getBalance(ameliaPond), 0);
+    }
+
+    /**
+     * Tests {@link Bank#addAuthenticateUser(Person, long, int)}
+     */
+    @Test
+    public void givenOneCompanyWhenAddingAAuthenticatedUserThenExpectToAuthenticate() {
+        //given
+        final var company = new Company("Tiago LTDA.", 99);
+        final var account = bank.openAccount(company, "9999", 0);
+        final var person = new Person("One", "Person", 90);
+
+        //when
+        assertFalse(bank.authenticateUser(person, account, "8888"));
+        assertFalse(bank.authenticateUser(person, account, "9999"));
+        assertTrue(bank.addAuthenticateUser(person, account, "9999"));
+
+        //then
+        assertFalse(bank.authenticateUser(person, account, "8888"));
+        assertTrue(bank.authenticateUser(person, account, "9999"));
     }
 }

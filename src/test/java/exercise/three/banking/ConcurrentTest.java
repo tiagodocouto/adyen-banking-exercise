@@ -1,22 +1,22 @@
 package exercise.three.banking;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import exercise.three.banking.Bank;
-import exercise.three.banking.Person;
-import exercise.three.banking.Transaction;
+import exercise.three.banking.bank.Bank;
+import exercise.three.banking.holder.Person;
+import exercise.three.banking.transaction.Transaction;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 public class ConcurrentTest {
 
@@ -33,15 +33,14 @@ public class ConcurrentTest {
         final int amount = 10;
 
         final Bank bank = new Bank();
-        final int pin = 12345;
-        final Person person = new Person("Charitable", "Guy", pin);
-        final long accountNumber = bank.openConsumerAccount(person, pin, amount * amountOfCharities);
+        final Person person = new Person("Charitable", "Guy", 12345);
+        final long accountNumber = bank.openAccount(person, "12345", amount * amountOfCharities);
 
         final CountDownLatch latch = new CountDownLatch(amountOfCharities);
 
         for (int i = 0; i < amountOfCharities; i++) {
             service.submit(() -> {
-                if (bank.authenticateUser(accountNumber, pin)) {
+                if (bank.authenticateUser(null, accountNumber, "12345")) {
                     bank.debit(accountNumber, amount);
                 }
 
@@ -64,8 +63,8 @@ public class ConcurrentTest {
 
         final List<AccountIdent> accounts = IntStream.range(0, maxAccounts).parallel().mapToObj(identifier -> {
             final Person accountHolder = new Person("person-" + identifier, "test", identifier);
-            return new AccountIdent(identifier, bank.openConsumerAccount(accountHolder, identifier, identifier));
-        }).collect(Collectors.toList());
+            return new AccountIdent(String.valueOf(identifier), bank.openAccount(accountHolder, String.valueOf(identifier), identifier));
+        }).toList();
 
         for (long i = 1; i <= maxAccounts; i++) {
             final long lookFor = i;
@@ -83,7 +82,7 @@ public class ConcurrentTest {
             }
 
             // remove balance
-            assertTrue(transaction.debit(ident.identifier));
+            assertTrue(transaction.debit(Double.parseDouble(ident.identifier)));
 
             final double balance = bank.getBalance(ident.accountId);
             assertEquals(0d, balance, 0.0);
@@ -99,10 +98,11 @@ public class ConcurrentTest {
     }
 
     private static class AccountIdent {
-        Integer identifier;
+        String identifier;
+
         Long accountId;
 
-        AccountIdent(Integer identifier, Long accountId) {
+        AccountIdent(String identifier, Long accountId) {
             this.identifier = identifier;
             this.accountId = accountId;
         }

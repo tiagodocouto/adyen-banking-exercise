@@ -1,9 +1,9 @@
-package exercise.three.banking;
+package exercise.three.banking.holder;
 
 public class Person extends AccountHolder {
-    private String firstName;
+    private final String firstName;
 
-    private String lastName;
+    private final String lastName;
 
     public Person(String firstName, String lastName, int idNumber) {
         super(idNumber);

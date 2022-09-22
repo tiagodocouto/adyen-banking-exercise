@@ -1,4 +1,6 @@
-package exercise.three.banking;
+package exercise.three.banking.account;
+
+import exercise.three.banking.holder.AccountHolder;
 
 /**
  * The public methods for the {@link Account} class
@@ -14,7 +16,7 @@ public interface AccountInterface {
      * @param attemptedPin The attempted PIN.
      * @return true if attemptedPin matches the account; otherwise, return false.
      */
-    boolean validatePin(int attemptedPin);
+    boolean validatePin(String attemptedPin);
 
     /**
      * @return {@link Account#accountBalance}.
@@ -24,7 +26,7 @@ public interface AccountInterface {
     /**
      * @return {@link Account#accountNumber}
      */
-    Long getAccountNumber();
+    long getAccountNumber();
 
     /**
      * @param amount The amount to be deposited into the account.
